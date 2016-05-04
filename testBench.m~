@@ -2,21 +2,28 @@ clc, clear, close all;
 
 numbits = 1024;
 M = 2;
-k = log2(M);
-snr = 20;
-channel = rayleighchan(ts,fd);
+P = 1; % max power allowable by transmitters
+snrD = 10;
+snrR = 20;
+r = 50; % bits/s
+W = 100; % Hz , guessing
+R = (2*r)/W;
+SNRnorm = 10^(snrD) / (2^R-1); %CONVERT SNR TO LINEAR!!!!
 
+% snr = 10
 
-bits = randi([0,1],1,numbits);
-msg = bi2de(reshape(bits,k,size(bits,2)/k).','left-msb')';
-x = qammod(msg,M);
-xc = conv(channel,x);
-xc = xc(1:length(x));
-xcn = awgn(xc,snr,'measured');
-yn = qamdemod(xcn,M,0,'gray');
-yn = de2bi(yn,'left-msb')';
+symbolPeriod = 1E-4;
+coherenceTime = 10; %should be much greater than symbol period for slow fading
+dopplerShift = 1/coherenceTime; 
+channelSD = rayleighchan(symbolPeriod,dopplerShift);
+channelSD.StorePathGains = true;
+channelSR = rayleighchan(symbolPeriod,dopplerShift);
+channelSR.StorePathGains = true;
+channelRD = rayleighchan(symbolPeriod,dopplerShift);
+channelRD.StorePathGains = true;
 
-[numerr,ratioerr] = biterr(bits,yn)
+amplifyAndForward(snrD,snrR,P,M,numbits,channelSD,channelSR,channelRD);
+
 
 
 
