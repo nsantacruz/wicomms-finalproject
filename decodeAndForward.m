@@ -1,4 +1,4 @@
-function [ isoutage ] = amplifyAndForward( snrD,snrR,P,M,numbits,channelSD,channelSR,channelRD,outageThreshold )
+function [ isoutage ] = decodeAndForward( snrD,snrR,P,M,numbits,channelSD,channelSR,channelRD,outageThreshold )
 %AMPLIFYANDFORWARD - implements the amplify and forward cooperative
 %algorithm
 %snrD, snrR - snr at destination and relay, respectively
@@ -30,12 +30,17 @@ xSDn = awgn(xSD,snrD,'measured');
 xSR = filter(channelSR,x);
 xSRn = awgn(xSR,snrR,'measured');
 
-%AMPLIFY APPROPRIATELY
-hmag = channelSR.PathGains' .* channelSR.PathGains.';
-beta = sqrt(P ./ (hmag' * P + n0Rlinear^2))';
+%DECODE AND FORWARD
 xSRnEq = xSRn ./ channelSR.PathGains.';
-xSRnEq = beta.*xSRnEq;
-xRD = filter(channelRD,xSRnEq);
+xSRdecoded = qamdemod(xSRnEq,M,0,'gray');
+xSRdecoded = de2bi(xSRdecoded,'left-msb')';
+xSRdecoded = bi2de(reshape(xSRdecoded,k,size(xSRdecoded,2)/k).','left-msb')';
+xforward = qammod(xSRdecoded,M);
+xforward = xforward*P/ std(xforward); %scale transmission power to P
+
+
+
+xRD = filter(channelRD,xforward);
 xRDn = awgn(xRD,snrD,'measured');
 
 %equalize
