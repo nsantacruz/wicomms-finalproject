@@ -1,20 +1,28 @@
 clc, clear, close all;
 
 numbits = 1024;
+numtrials = 1E3;
 M = 2;
-P = 1; % max power allowable by transmitters
-snrD = 10;
-snrR = 20;
+P = 10; % max power allowable by transmitters
+snrD = 0:35;
+snrR = snrD; %only analyzing symmetric networks
+
+
 r = 50; % bits/s
 W = 100; % Hz , guessing
 R = (2*r)/W;
-SNRnorm = 10^(snrD) / (2^R-1); %CONVERT SNR TO LINEAR!!!!
-
-% snr = 10
-
+outageThreshold = 5; %dB. SNR at receiver below which we consider receipt an "outage"
+snrDnorm = 10^(snrD/10) / (2^R-1); %CONVERT SNR TO LINEAR!!!!
 symbolPeriod = 1E-4;
 coherenceTime = 10; %should be much greater than symbol period for slow fading
 dopplerShift = 1/coherenceTime; 
+
+
+outageResults = {
+    direct : zeros(1,length(snrD))
+zeros(5,length(snrD));
+
+for ii = 1:length(snrD)
 channelSD = rayleighchan(symbolPeriod,dopplerShift);
 channelSD.StorePathGains = true;
 channelSR = rayleighchan(symbolPeriod,dopplerShift);
@@ -22,8 +30,8 @@ channelSR.StorePathGains = true;
 channelRD = rayleighchan(symbolPeriod,dopplerShift);
 channelRD.StorePathGains = true;
 
-amplifyAndForward(snrD,snrR,P,M,numbits,channelSD,channelSR,channelRD);
-
+amplifyAndForward(snrD,snrR,P,M,numbits,channelSD,channelSR,channelRD,outageThreshold);
+end
 
 
 
