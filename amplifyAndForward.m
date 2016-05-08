@@ -1,6 +1,15 @@
 function [ isoutage ] = amplifyAndForward( snrD,snrR,P,M,numbits,channelSD,channelSR,channelRD,outageThreshold )
-%UNTITLED2 Summary of this function goes here
-%   Detailed explanation goes here
+%AMPLIFYANDFORWARD - implements the amplify and forward cooperative
+%algorithm
+%snrD, snrR - snr at destination and relay, respectively
+%P - power limit of source and relay transmitters
+%M - qam modulation order
+%numbits - duh
+%channelSD,channelSR,channelRD - rayleighchan objects for channel b/w
+%source and destination, source and relay, relay and destination
+%respectively
+%outageThreshold - snr at destination below which the transmission is
+%considered an outage, in dB.
 k = log2(M);
 bits = randi([0,1],1,numbits);
 msg = bi2de(reshape(bits,k,size(bits,2)/k).','left-msb')';
