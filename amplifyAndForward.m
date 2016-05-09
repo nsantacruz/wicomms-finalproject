@@ -6,9 +6,9 @@ bits = randi([0,1],1,numbits);
 msg = bi2de(reshape(bits,k,size(bits,2)/k).','left-msb')';
 x = qammod(msg,M);
 
-n0Dlinear = std(x(:))/10^(snrD/10);
+n0Dlinear = std(x(:))/10^(snrD/10)
+n0Rlinear = std(x(:))/10^(snrR/10)
 
-n0Rlinear = std(x(:))/10^(snrR/10);
 n0Rdb = 10*log10(n0Rlinear);
 
 
@@ -29,10 +29,10 @@ xRDn = awgn(xRD,snrD,'measured');
 xSDnEq = xSDn ./ channelSD.PathGains.';
 xRDnEq = xRDn ./ channelRD.PathGains.';
 
-xMRC = maximalRatioCombine(xSDnEq,xRDnEq,channelSD.PathGains,channelRD.PathGains,n0Dlinear);
+xMRC = maximalRatioCombine(xSDnEq,xRDnEq,channelSD.PathGains,channelRD.PathGains,n0Dlinear,n0Dlinear+n0Rlinear);
 scatterplot(xMRC);
-scatterplot(xSDn);
-scatterplot(xRDn);
+scatterplot(xSDnEq);
+scatterplot(xRDnEq);
 yn = qamdemod(xMRC,M,0,'gray');
 yn = de2bi(yn,'left-msb')';
 

@@ -4,12 +4,12 @@ numbits = 1024;
 M = 2;
 P = 1; % max power allowable by transmitters
 snrD = 5;
-snrR = 5;
+snrR = 50;
 r = 50; % bits/s
 W = 100; % Hz , guessing
 R = (2*r)/W;
-snrDnorm = 10^(snrD/10) / (2^R-1); %CONVERT SNR TO LINEAR!!!!
 
+%snrDnorm = 10^(snrD/10) / (2^R-1); %CONVERT SNR TO LINEAR!!!!
 % snrdb = 10log(snrl)
 
 symbolPeriod = 1E-4;
