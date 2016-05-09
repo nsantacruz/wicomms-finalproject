@@ -45,9 +45,9 @@ xSDnEq = xSDn ./ channelSD.PathGains.';
 xRDnEq = xRDn ./ channelRD.PathGains.';
 
 
-xMRC = maximalRatioCombine(xSDnEq,xRDnEq,channelSD.PathGains,channelRD.PathGains,n0Dlinear);
+[xMRC,measuredSnrD] = maximalRatioCombine(xSDnEq,xRDnEq,channelSD.PathGains,channelRD.PathGains,n0Dlinear);
 
-measuredSnrD = 10*log10(std(xMRC)/n0Dlinear);
+%measuredSnrD = 10*log10(std(xMRC)/n0Dlinear);
 isoutage = measuredSnrD < outageThreshold;
 
 % scatterplot(xMRC);
