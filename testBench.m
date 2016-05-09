@@ -1,11 +1,11 @@
 clc, clear, close all;
 
 numbits = 1024;
-numtrials = 1E3;
+numtrials = 1E2;
 M = 2;
 
 P = 10; % max power allowable by transmitters
-snrD = 0:3:35;
+snrD = 15:3:35;
 snrR = snrD; %only analyzing symmetric networks
 
 
