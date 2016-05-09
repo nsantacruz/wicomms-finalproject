@@ -3,9 +3,8 @@ clc, clear, close all;
 numbits = 1024;
 numtrials = 1E3;
 M = 2;
-
 P = 10; % max power allowable by transmitters
-snrD = 0:3:35;
+snrD = 0::35;
 snrR = snrD; %only analyzing symmetric networks
 
 
@@ -14,7 +13,6 @@ W = 100; % Hz , guessing
 R = (2*r)/W;
 outageThreshold = 5; %dB. SNR at receiver below which we consider receipt an "outage"
 snrDnorm = 10.^(snrD/10) / (2^R-1); %CONVERT SNR TO LINEAR!!!!
-
 symbolPeriod = 1E-4;
 coherenceTime = 10; %should be much greater than symbol period for slow fading
 dopplerShift = 1/coherenceTime; 
