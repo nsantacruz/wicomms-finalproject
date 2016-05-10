@@ -18,7 +18,7 @@ msg = bi2de(reshape(bits,k,size(bits,2)/k).','left-msb')';
 x = qammod(msg,M);
 x = x*sqrt(P) / std(x); %scale transmission power to P
 
-SELECTION_THRESHOLD = 0.5;
+SELECTION_THRESHOLD = 0.7;
 
 n0Dlinear = var(x)/10^(snrD/10);
 
@@ -59,7 +59,8 @@ if mean(abs(channelSR.PathGains)) > SELECTION_THRESHOLD
     
     rate = R/2;
 else
-    yn = qamdemod(xSDn,M,0,'gray');
+    xSDnEq = xSDn ./ channelSD.PathGains.';
+    yn = qamdemod(xSDnEq,M,0,'gray');
     yn = de2bi(yn,'left-msb')';
     
     rate = R;
