@@ -1,4 +1,4 @@
-function [ isoutage ] = amplifyAndForward( snrD,snrR,P,M,numbits,channelSD,channelSR,channelRD,outageBitThreshold )
+function [ isoutage,rate ] = selectionDecodeAndForward( snrD,snrR,P,M,numbits,channelSD,channelSR,channelRD,outageBitThreshold,R )
 %AMPLIFYANDFORWARD - implements the amplify and forward cooperative
 %algorithm
 %snrD, snrR - snr at destination and relay, respectively
@@ -18,6 +18,7 @@ msg = bi2de(reshape(bits,k,size(bits,2)/k).','left-msb')';
 x = qammod(msg,M);
 x = x*sqrt(P) / std(x); %scale transmission power to P
 
+SELECTION_THRESHOLD = 0.5;
 
 n0Dlinear = var(x)/10^(snrD/10);
 
@@ -32,23 +33,39 @@ xSDn = awgn(xSD,snrD,'measured');
 xSR = filter(channelSR,x);
 xSRn = awgn(xSR,snrR,'measured');
 
-%AMPLIFY APPROPRIATELY
-hmag = channelSR.PathGains' .* channelSR.PathGains.';
-beta = sqrt(P ./ (hmag' * P + n0Rlinear^2))';
-xSRnEq = xSRn ./ channelSR.PathGains.';
-xSRnEq = beta.*xSRnEq;
-xRD = filter(channelRD,xSRnEq);
-xRDn = awgn(xRD,snrD,'measured');
 
-%equalize
-xSDnEq = xSDn ./ channelSD.PathGains.';
-xRDnEq = xRDn ./ channelRD.PathGains.';
-xSDnEq = sqrt(P)*xSDnEq/std(xSDnEq);
-xRDnEq = sqrt(P)*xRDnEq/std(xRDnEq);
+if mean(abs(channelSR.PathGains)) > SELECTION_THRESHOLD
+    %DECODE AND FORWARD
+    xSRnEq = xSRn ./ channelSR.PathGains.';
+    xSRdecoded = qamdemod(xSRnEq,M,0,'gray');
+    xSRdecoded = de2bi(xSRdecoded,'left-msb')';
+    xSRdecoded = bi2de(reshape(xSRdecoded,k,size(xSRdecoded,2)/k).','left-msb')';
+    xforward = qammod(xSRdecoded,M);
+    xforward = xforward*sqrt(P)/ std(xforward); %scale transmission power to P
+    xRD = filter(channelRD,xforward);
+    xRDn = awgn(xRD,snrD,'measured');
+    
+    %equalize
+    xSDnEq = xSDn ./ channelSD.PathGains.';
+    xRDnEq = xRDn ./ channelRD.PathGains.';
+    xSDnEq = sqrt(P)*xSDnEq/std(xSDnEq);
+    xRDnEq = sqrt(P)*xRDnEq/std(xRDnEq);
 
 
-[xMRC] = maximalRatioCombine(xSDnEq,xRDnEq,channelSD.PathGains,channelRD.PathGains,n0Dlinear,n0Dlinear + n0Rlinear);
-xMRC = xMRC / std(xMRC);
+    [xMRC] = maximalRatioCombine(xSDnEq,xRDnEq,channelSD.PathGains,channelRD.PathGains,n0Dlinear,n0Dlinear + n0Rlinear);
+    xMRC = xMRC / std(xMRC);
+    yn = qamdemod(xMRC,M,0,'gray');
+    yn = de2bi(yn,'left-msb')';
+    
+    rate = R/2;
+else
+    yn = qamdemod(xSDn,M,0,'gray');
+    yn = de2bi(yn,'left-msb')';
+    
+    rate = R;
+end
+    
+    %DIRECT
 %nMRC = xMRC - x;
 %measuredSnrD = 10*log10(var(x)/var(nMRC));  
 %measuredSnrD = 10*log10(std(xMRC)/n0Dlinear);
@@ -57,8 +74,7 @@ xMRC = xMRC / std(xMRC);
 %  scatterplot(xMRC);
 %  scatterplot(xSDnEq);
 %  scatterplot(xRDnEq);
-yn = qamdemod(xMRC,M,0,'gray');
-yn = de2bi(yn,'left-msb')';
+
 
 [numerr,ratioerr] = biterr(bits,yn);
 

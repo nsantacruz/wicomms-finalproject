@@ -1,4 +1,4 @@
-function [ combo ] = maximalRatioCombine( sig1,sig2,h1,h2,N01,N02)
+function [ combo,comboSNR ] = maximalRatioCombine( sig1,sig2,h1,h2,N01,N02)
 %MAXIMALRATIOCOMBINE - combine signals, maximally
 % sig1, sig2 - received signals
 % h1,h2 - path gains associated with each signal
@@ -13,6 +13,11 @@ a2 = (h2'.*h2.') / N02;
 % a2
 combo = a1.*sig1 + a2.*sig2;
 combo = combo / std(combo);
+
+
+snr1 = (std(sig1)/N01);
+snr2 = (std(sig2)/N02);
+comboSNR = 10*log10(
 
 end
 

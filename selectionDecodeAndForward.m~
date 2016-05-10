@@ -1,4 +1,4 @@
-function [ isoutage ] = decodeAndForward( snrD,snrR,P,M,numbits,channelSD,channelSR,channelRD,outageBitThreshold )
+function [ isoutage ] = selectionDecodeAndForward( snrD,snrR,P,M,numbits,channelSD,channelSR,channelRD,outageBitThreshold )
 %AMPLIFYANDFORWARD - implements the amplify and forward cooperative
 %algorithm
 %snrD, snrR - snr at destination and relay, respectively
@@ -18,9 +18,12 @@ msg = bi2de(reshape(bits,k,size(bits,2)/k).','left-msb')';
 x = qammod(msg,M);
 x = x*sqrt(P) / std(x); %scale transmission power to P
 
+SELCTION_THRESHOLD = 0.5;
+
 n0Dlinear = var(x)/10^(snrD/10);
 
 n0Rlinear = var(x)/10^(snrR/10);
+
 n0Rdb = 10*log10(n0Rlinear);
 
 
@@ -30,6 +33,8 @@ xSDn = awgn(xSD,snrD,'measured');
 xSR = filter(channelSR,x);
 xSRn = awgn(xSR,snrR,'measured');
 
+
+if mean(abs(channelSR
 %DECODE AND FORWARD
 xSRnEq = xSRn ./ channelSR.PathGains.';
 xSRdecoded = qamdemod(xSRnEq,M,0,'gray');
@@ -40,29 +45,23 @@ xforward = xforward*sqrt(P)/ std(xforward); %scale transmission power to P
 
 
 
-xRD = filter(channelRD,xforward);
-xRDn = awgn(xRD,snrD,'measured');
-
 %equalize
 xSDnEq = xSDn ./ channelSD.PathGains.';
 xRDnEq = xRDn ./ channelRD.PathGains.';
 xSDnEq = sqrt(P)*xSDnEq/std(xSDnEq);
 xRDnEq = sqrt(P)*xRDnEq/std(xRDnEq);
 
-xMRC = maximalRatioCombine(xSDnEq,xRDnEq,channelSD.PathGains,channelRD.PathGains,n0Dlinear,n0Dlinear + n0Rlinear);
 
+[xMRC] = maximalRatioCombine(xSDnEq,xRDnEq,channelSD.PathGains,channelRD.PathGains,n0Dlinear,n0Dlinear + n0Rlinear);
+xMRC = xMRC / std(xMRC);
 %nMRC = xMRC - x;
-%measuredSnrD = 10*log10(var(x)/var(nMRC));
+%measuredSnrD = 10*log10(var(x)/var(nMRC));  
 %measuredSnrD = 10*log10(std(xMRC)/n0Dlinear);
 %isoutage = measuredSnrD < outageBitThreshold;
 
-
-
-% scatterplot(xMRC);
-% scatterplot(xSDn);
-% scatterplot(xRDn);
-xMRC = xMRC / std(xMRC);
-
+%  scatterplot(xMRC);
+%  scatterplot(xSDnEq);
+%  scatterplot(xRDnEq);
 yn = qamdemod(xMRC,M,0,'gray');
 yn = de2bi(yn,'left-msb')';
 
