@@ -34,7 +34,26 @@ xSR = filter(channelSR,x);
 xSRn = awgn(xSR,snrR,'measured');
 
 
-if mean(abs(channelSR.PathGains)) > SELECTION_THRESHOLD
+
+yn = qamdemod(xSDn,M,0,'gray');
+yn = de2bi(yn,'left-msb')';
+rate = R;
+
+    %DIRECT
+%nMRC = xMRC - x;
+%measuredSnrD = 10*log10(var(x)/var(nMRC));  
+%measuredSnrD = 10*log10(std(xMRC)/n0Dlinear);
+%isoutage = measuredSnrD < outageBitThreshold;
+
+%  scatterplot(xMRC);
+%  scatterplot(xSDnEq);
+%  scatterplot(xRDnEq);
+
+
+[numerr,ratioerr] = biterr(bits,yn);
+
+isoutage = numerr >= outageBitThreshold;
+if (isoutage)    
     %DECODE AND FORWARD
     xSRnEq = xSRn ./ channelSR.PathGains.';
     xSRdecoded = qamdemod(xSRnEq,M,0,'gray');
@@ -58,27 +77,9 @@ if mean(abs(channelSR.PathGains)) > SELECTION_THRESHOLD
     yn = de2bi(yn,'left-msb')';
     
     rate = R/2;
-else
-    yn = qamdemod(xSDn,M,0,'gray');
-    yn = de2bi(yn,'left-msb')';
-    
-    rate = R;
+    [numerr,ratioerr] = biterr(bits,yn);
+
+    isoutage = numerr >= outageBitThreshold;
 end
-    
-    %DIRECT
-%nMRC = xMRC - x;
-%measuredSnrD = 10*log10(var(x)/var(nMRC));  
-%measuredSnrD = 10*log10(std(xMRC)/n0Dlinear);
-%isoutage = measuredSnrD < outageBitThreshold;
-
-%  scatterplot(xMRC);
-%  scatterplot(xSDnEq);
-%  scatterplot(xRDnEq);
-
-
-[numerr,ratioerr] = biterr(bits,yn);
-
-isoutage = numerr >= outageBitThreshold;
-
 end
 
