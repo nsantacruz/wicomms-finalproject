@@ -18,7 +18,7 @@ msg = bi2de(reshape(bits,k,size(bits,2)/k).','left-msb')';
 x = qammod(msg,M);
 x = x*sqrt(P) / std(x); %scale transmission power to P
 
-SELECTION_THRESHOLD = 0.5;
+SELECTION_THRESHOLD = 0.7;
 
 n0Dlinear = var(x)/10^(snrD/10);
 
@@ -77,7 +77,32 @@ if (isoutage)
     yn = de2bi(yn,'left-msb')';
     
     rate = R/2;
+<<<<<<< HEAD
     [numerr,ratioerr] = biterr(bits,yn);
+=======
+else
+    xSDnEq = xSDn ./ channelSD.PathGains.';
+    yn = qamdemod(xSDnEq,M,0,'gray');
+    yn = de2bi(yn,'left-msb')';
+    
+    rate = R;
+end
+    
+    %DIRECT
+%nMRC = xMRC - x;
+%measuredSnrD = 10*log10(var(x)/var(nMRC));  
+%measuredSnrD = 10*log10(std(xMRC)/n0Dlinear);
+%isoutage = measuredSnrD < outageBitThreshold;
+
+%  scatterplot(xMRC);
+%  scatterplot(xSDnEq);
+%  scatterplot(xRDnEq);
+
+
+[numerr,ratioerr] = biterr(bits,yn);
+
+isoutage = numerr >= outageBitThreshold;
+>>>>>>> 3b06f72e20ab4bb9f32c930b85f138d5316329db
 
     isoutage = numerr >= outageBitThreshold;
 end
