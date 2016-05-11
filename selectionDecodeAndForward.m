@@ -33,8 +33,7 @@ xSDn = awgn(xSD,snrD,'measured');
 xSR = filter(channelSR,x);
 xSRn = awgn(xSR,snrR,'measured');
 
-
-if mean(abs(channelSR.PathGains)) > SELECTION_THRESHOLD
+if mean(abs(channelSR.PathGains)) > SELECTION_THRESHOLD    
     %DECODE AND FORWARD
     xSRnEq = xSRn ./ channelSR.PathGains.';
     xSRdecoded = qamdemod(xSRnEq,M,0,'gray');
@@ -80,6 +79,6 @@ end
 [numerr,ratioerr] = biterr(bits,yn);
 
 isoutage = numerr >= outageBitThreshold;
-
+s
 end
 
