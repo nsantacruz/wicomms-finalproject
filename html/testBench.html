@@ -1,0 +1,320 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>testBench</title><meta name="generator" content="MATLAB 8.2"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2016-05-11"><meta name="DC.source" content="testBench.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, tt, code { font-size:12px; }
+pre { margin:0px 0px 20px; }
+pre.error { color:red; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><pre class="codeinput">clc, clear, close <span class="string">all</span>;
+
+numbits = 1024;
+numtrials = 1E1;
+M = 4;
+k = log2(M);
+P = 10; <span class="comment">% max power allowable by transmitters</span>
+snrD = -3:2:20;
+snrR = snrD; <span class="comment">%only analyzing symmetric networks</span>
+
+
+r = 25; <span class="comment">% bits/s</span>
+W = 100; <span class="comment">% Hz , guessing</span>
+R = k*(2*r)/W;
+outageBitThreshold = numbits*0.15; <span class="comment">%dB. SNR at receiver below which we consider receipt an "outage"</span>
+
+
+symbolPeriod = 1E-2;
+coherenceTime = 1; <span class="comment">%should be much greater than symbol period for slow fading</span>
+dopplerShift = 1/coherenceTime;
+
+
+outageResults = struct(<span class="keyword">...</span>
+    <span class="string">'direct'</span>,      zeros(1,length(snrD)),<span class="keyword">...</span>
+    <span class="string">'amplify'</span>,     zeros(1,length(snrD)),<span class="keyword">...</span>
+    <span class="string">'decode'</span>,      zeros(1,length(snrD)),<span class="keyword">...</span>
+    <span class="string">'selection'</span>,   zeros(1,length(snrD)),<span class="keyword">...</span>
+    <span class="string">'incremental'</span>, zeros(1,length(snrD))<span class="keyword">...</span>
+);
+
+bigR = struct(<span class="keyword">...</span>
+    <span class="string">'direct'</span>,      zeros(1,length(snrD)),<span class="keyword">...</span>
+    <span class="string">'amplify'</span>,     zeros(1,length(snrD)),<span class="keyword">...</span>
+    <span class="string">'decode'</span>,      zeros(1,length(snrD)),<span class="keyword">...</span>
+    <span class="string">'selection'</span>,   zeros(1,length(snrD)),<span class="keyword">...</span>
+    <span class="string">'incremental'</span>, zeros(1,length(snrD))<span class="keyword">...</span>
+);
+
+snrDnorm = struct(<span class="keyword">...</span>
+    <span class="string">'direct'</span>,      zeros(1,length(snrD)),<span class="keyword">...</span>
+    <span class="string">'amplify'</span>,     zeros(1,length(snrD)),<span class="keyword">...</span>
+    <span class="string">'decode'</span>,      zeros(1,length(snrD)),<span class="keyword">...</span>
+    <span class="string">'selection'</span>,   zeros(1,length(snrD)),<span class="keyword">...</span>
+    <span class="string">'incremental'</span>, zeros(1,length(snrD))<span class="keyword">...</span>
+);
+
+channelSD = rayleighchan(symbolPeriod,dopplerShift);
+channelSD.StorePathGains = true;
+channelSR = rayleighchan(symbolPeriod,dopplerShift);
+channelSR.StorePathGains = true;
+channelRD = rayleighchan(symbolPeriod,dopplerShift);
+channelRD.StorePathGains = true;
+
+
+tic;
+h = waitbar(0,<span class="string">'wait!'</span>);
+<span class="keyword">for</span> ii = 1:length(snrD)
+    <span class="keyword">for</span> jj = 1:numtrials
+
+        bits = randi([0,1],1,numbits);
+        msg = bi2de(reshape(bits,k,size(bits,2)/k).',<span class="string">'left-msb'</span>)';
+        x = qammod(msg,M);
+        x = x*sqrt(P) / std(x); <span class="comment">%scale transmission power to P</span>
+        xSD = filter(channelSD,x);
+        xSR = filter(channelSR,x);
+        xSDn = awgn(xSD,snrD(ii),<span class="string">'measured'</span>);
+        xSRn = awgn(xSR,snrR(ii),<span class="string">'measured'</span>);
+        <span class="comment">%sdPathGains = channelSD.PathGains;</span>
+        <span class="comment">%srPathGains = channelSR.PathGains;</span>
+
+        dirResult  = directTransmission(bits,x,xSDn,snrD(ii),P,M,channelSD,outageBitThreshold);
+        ampResult = amplifyAndForward(bits,x,xSDn,xSRn,snrD(ii),snrR(ii),P,M,channelSD,channelSR,channelRD,outageBitThreshold);
+        decResult = decodeAndForward(bits,x,xSDn,xSRn,snrD(ii),snrR(ii),P,M,channelSD,channelSR,channelRD,outageBitThreshold);
+        [secResult,secRate] = selectionDecodeAndForward(bits,x,xSDn,xSRn,snrD(ii),snrR(ii),P,M,channelSD,channelSR,channelRD,outageBitThreshold,R);
+        [incResult,incRate] = incrementalAmplifyAndForward(bits,x,xSDn,xSRn,snrD(ii),snrR(ii),P,M,channelSD,channelSR,channelRD,outageBitThreshold,R);
+
+        outageResults.direct(ii) = outageResults.direct(ii) + dirResult;
+        outageResults.amplify(ii) = outageResults.amplify(ii) + ampResult;
+        outageResults.decode(ii) = outageResults.decode(ii) + decResult;
+        outageResults.selection(ii) = outageResults.selection(ii) + secResult;
+        outageResults.incremental(ii) = outageResults.incremental(ii) + incResult;
+
+        bigR.selection(ii) = secRate + bigR.selection(ii);
+        bigR.incremental(ii) = incRate + bigR.incremental(ii);
+
+
+    <span class="keyword">end</span>
+    bigR.direct(ii) = R;
+    bigR.amplify(ii) = R/2;
+    bigR.decode(ii) = R/2;
+    bigR.selection(ii) = bigR.selection(ii)/numtrials;
+    bigR.incremental(ii) = bigR.incremental(ii)/numtrials;
+    snrDnorm.direct(ii) = snrD(ii) - 10*log10(2^bigR.direct(ii)-1);
+    snrDnorm.amplify(ii) = snrD(ii) - 10*log10(2^bigR.amplify(ii)-1);
+    snrDnorm.decode(ii) = snrD(ii) - 10*log10(2^bigR.decode(ii)-1);
+    snrDnorm.selection(ii) = snrD(ii) - 10*log10(2^bigR.selection(ii)-1);
+    snrDnorm.incremental(ii) = snrD(ii) - 10*log10(2^bigR.incremental(ii)-1);
+
+    waitbar(ii/length(snrD));
+
+    timeest = (toc * length(snrD)) / ii - toc;
+    disp([<span class="string">'ii = '</span> int2str(ii) <span class="string">' - Seconds Left : '</span> num2str(timeest) <span class="string">' - Minutes Left : '</span> num2str(timeest/60)]);
+<span class="keyword">end</span>
+close(h);
+
+
+figure;semilogy(snrDnorm.amplify,outageResults.amplify/numtrials,<span class="string">'rs-'</span>);hold <span class="string">on</span>;semilogy(snrDnorm.direct(4:end),outageResults.direct(4:end)/numtrials,<span class="string">'b*-'</span>);semilogy(snrDnorm.decode,outageResults.decode/numtrials,<span class="string">'kx-'</span>);semilogy(snrDnorm.selection,outageResults.selection/numtrials,<span class="string">'go-'</span>);semilogy(snrDnorm.incremental,outageResults.incremental/numtrials,<span class="string">'md-'</span>);axis([0 15 5E-4 1]);hold <span class="string">off</span>;xlabel(<span class="string">'Rate Normalized SNR (dB)'</span>);ylabel(<span class="string">'Outage Probability'</span>);title(<span class="string">'Outage Probabilities vs SNR'</span>);legend(<span class="string">'amplify and forward'</span>,<span class="string">'direct transmission'</span>,<span class="string">'decode and forward'</span>,<span class="string">'selection decode and forward'</span>,<span class="string">'incremental amplify and forward'</span>);
+
+figure;hold <span class="string">on</span>;
+plot(snrD,bigR.amplify,<span class="string">'rs-'</span>);
+plot(snrD,bigR.direct,<span class="string">'b*-'</span>);
+plot(snrD,bigR.decode,<span class="string">'kx-'</span>);
+plot(snrD,bigR.selection,<span class="string">'go-'</span>);
+plot(snrD,bigR.incremental,<span class="string">'md-'</span>);
+
+hold <span class="string">off</span>;
+legend(<span class="string">'amplify and forward'</span>,<span class="string">'direct transmission'</span>,<span class="string">'decode and forward'</span>,<span class="string">'selection decode and forward'</span>,<span class="string">'incremental amplify and forward'</span>);
+</pre><pre class="codeoutput">ii = 1 - Seconds Left : 7.501 - Minutes Left : 0.12502
+ii = 2 - Seconds Left : 6.0462 - Minutes Left : 0.10077
+ii = 3 - Seconds Left : 5.2247 - Minutes Left : 0.087079
+ii = 4 - Seconds Left : 4.6007 - Minutes Left : 0.076678
+ii = 5 - Seconds Left : 3.9817 - Minutes Left : 0.066362
+ii = 6 - Seconds Left : 3.4013 - Minutes Left : 0.056689
+ii = 7 - Seconds Left : 2.8159 - Minutes Left : 0.046931
+ii = 8 - Seconds Left : 2.2352 - Minutes Left : 0.037254
+ii = 9 - Seconds Left : 1.67 - Minutes Left : 0.027833
+ii = 10 - Seconds Left : 1.1042 - Minutes Left : 0.018403
+ii = 11 - Seconds Left : 0.55014 - Minutes Left : 0.009169
+ii = 12 - Seconds Left : -1.4e-05 - Minutes Left : -2.3333e-07
+</pre><img vspace="5" hspace="5" src="testBench_01.png" alt=""> <img vspace="5" hspace="5" src="testBench_02.png" alt=""> <p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2013b</a><br></p></div><!--
+##### SOURCE BEGIN #####
+clc, clear, close all;
+
+numbits = 1024;
+numtrials = 1E1;
+M = 4;
+k = log2(M);
+P = 10; % max power allowable by transmitters
+snrD = -3:2:20;
+snrR = snrD; %only analyzing symmetric networks
+
+
+r = 25; % bits/s
+W = 100; % Hz , guessing
+R = k*(2*r)/W;
+outageBitThreshold = numbits*0.15; %dB. SNR at receiver below which we consider receipt an "outage"
+
+
+symbolPeriod = 1E-2;
+coherenceTime = 1; %should be much greater than symbol period for slow fading
+dopplerShift = 1/coherenceTime; 
+
+
+outageResults = struct(...
+    'direct',      zeros(1,length(snrD)),...
+    'amplify',     zeros(1,length(snrD)),...
+    'decode',      zeros(1,length(snrD)),...
+    'selection',   zeros(1,length(snrD)),...
+    'incremental', zeros(1,length(snrD))...
+);
+
+bigR = struct(...
+    'direct',      zeros(1,length(snrD)),...
+    'amplify',     zeros(1,length(snrD)),...
+    'decode',      zeros(1,length(snrD)),...
+    'selection',   zeros(1,length(snrD)),...
+    'incremental', zeros(1,length(snrD))...
+);
+
+snrDnorm = struct(...
+    'direct',      zeros(1,length(snrD)),...
+    'amplify',     zeros(1,length(snrD)),...
+    'decode',      zeros(1,length(snrD)),...
+    'selection',   zeros(1,length(snrD)),...
+    'incremental', zeros(1,length(snrD))...
+);
+
+channelSD = rayleighchan(symbolPeriod,dopplerShift);
+channelSD.StorePathGains = true;
+channelSR = rayleighchan(symbolPeriod,dopplerShift);
+channelSR.StorePathGains = true;
+channelRD = rayleighchan(symbolPeriod,dopplerShift);
+channelRD.StorePathGains = true;
+
+
+tic;        
+h = waitbar(0,'wait!');
+for ii = 1:length(snrD)
+    for jj = 1:numtrials
+        
+        bits = randi([0,1],1,numbits);
+        msg = bi2de(reshape(bits,k,size(bits,2)/k).','left-msb')';
+        x = qammod(msg,M);
+        x = x*sqrt(P) / std(x); %scale transmission power to P
+        xSD = filter(channelSD,x);
+        xSR = filter(channelSR,x);
+        xSDn = awgn(xSD,snrD(ii),'measured');
+        xSRn = awgn(xSR,snrR(ii),'measured');
+        %sdPathGains = channelSD.PathGains;
+        %srPathGains = channelSR.PathGains;
+        
+        dirResult  = directTransmission(bits,x,xSDn,snrD(ii),P,M,channelSD,outageBitThreshold);
+        ampResult = amplifyAndForward(bits,x,xSDn,xSRn,snrD(ii),snrR(ii),P,M,channelSD,channelSR,channelRD,outageBitThreshold);
+        decResult = decodeAndForward(bits,x,xSDn,xSRn,snrD(ii),snrR(ii),P,M,channelSD,channelSR,channelRD,outageBitThreshold);
+        [secResult,secRate] = selectionDecodeAndForward(bits,x,xSDn,xSRn,snrD(ii),snrR(ii),P,M,channelSD,channelSR,channelRD,outageBitThreshold,R);
+        [incResult,incRate] = incrementalAmplifyAndForward(bits,x,xSDn,xSRn,snrD(ii),snrR(ii),P,M,channelSD,channelSR,channelRD,outageBitThreshold,R);
+        
+        outageResults.direct(ii) = outageResults.direct(ii) + dirResult;
+        outageResults.amplify(ii) = outageResults.amplify(ii) + ampResult;
+        outageResults.decode(ii) = outageResults.decode(ii) + decResult;
+        outageResults.selection(ii) = outageResults.selection(ii) + secResult;
+        outageResults.incremental(ii) = outageResults.incremental(ii) + incResult;
+        
+        bigR.selection(ii) = secRate + bigR.selection(ii);
+        bigR.incremental(ii) = incRate + bigR.incremental(ii);
+        
+        
+    end
+    bigR.direct(ii) = R;
+    bigR.amplify(ii) = R/2;
+    bigR.decode(ii) = R/2;
+    bigR.selection(ii) = bigR.selection(ii)/numtrials;
+    bigR.incremental(ii) = bigR.incremental(ii)/numtrials;
+    snrDnorm.direct(ii) = snrD(ii) - 10*log10(2^bigR.direct(ii)-1);
+    snrDnorm.amplify(ii) = snrD(ii) - 10*log10(2^bigR.amplify(ii)-1);
+    snrDnorm.decode(ii) = snrD(ii) - 10*log10(2^bigR.decode(ii)-1);
+    snrDnorm.selection(ii) = snrD(ii) - 10*log10(2^bigR.selection(ii)-1);
+    snrDnorm.incremental(ii) = snrD(ii) - 10*log10(2^bigR.incremental(ii)-1);
+    
+    waitbar(ii/length(snrD));
+    
+    timeest = (toc * length(snrD)) / ii - toc;
+    disp(['ii = ' int2str(ii) ' - Seconds Left : ' num2str(timeest) ' - Minutes Left : ' num2str(timeest/60)]);
+end
+close(h);
+
+
+figure;semilogy(snrDnorm.amplify,outageResults.amplify/numtrials,'rs-');hold on;semilogy(snrDnorm.direct(4:end),outageResults.direct(4:end)/numtrials,'b*-');semilogy(snrDnorm.decode,outageResults.decode/numtrials,'kx-');semilogy(snrDnorm.selection,outageResults.selection/numtrials,'go-');semilogy(snrDnorm.incremental,outageResults.incremental/numtrials,'md-');axis([0 15 5E-4 1]);hold off;xlabel('Rate Normalized SNR (dB)');ylabel('Outage Probability');title('Outage Probabilities vs SNR');legend('amplify and forward','direct transmission','decode and forward','selection decode and forward','incremental amplify and forward');
+
+figure;hold on;
+plot(snrD,bigR.amplify,'rs-');
+plot(snrD,bigR.direct,'b*-');
+plot(snrD,bigR.decode,'kx-');
+plot(snrD,bigR.selection,'go-');
+plot(snrD,bigR.incremental,'md-');
+
+hold off;
+legend('amplify and forward','direct transmission','decode and forward','selection decode and forward','incremental amplify and forward');
+
+
+
+##### SOURCE END #####
+--></body></html>

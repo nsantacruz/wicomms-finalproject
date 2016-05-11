@@ -1,7 +1,7 @@
 clc, clear, close all;
 
 numbits = 1024;
-numtrials = 1E3;
+numtrials = 2E4;
 M = 4;
 k = log2(M);
 P = 10; % max power allowable by transmitters
@@ -110,8 +110,11 @@ semilogy(snrDnorm.direct(4:end),outageResults.direct(4:end)/numtrials,'b*-');
 semilogy(snrDnorm.decode,outageResults.decode/numtrials,'kx-');
 semilogy(snrDnorm.selection,outageResults.selection/numtrials,'go-');
 semilogy(snrDnorm.incremental,outageResults.incremental/numtrials,'md-');
-
+axis([0 15 5E-4 1]);
 hold off;
+xlabel('Rate Normalized SNR (dB)');
+ylabel('Outage Probability');
+title('Outage Probabilities vs SNR');
 legend('amplify and forward','direct transmission','decode and forward','selection decode and forward','incremental amplify and forward');
 
 figure;hold on;

@@ -1,18 +1,18 @@
 clc, clear, close all;
 
 numbits = 1024;
-numtrials = 1E2;
-M = 2;
+numtrials = 2E4;
+M = 4;
 k = log2(M);
 P = 10; % max power allowable by transmitters
-snrD = -3:1:10;
+snrD = -3:2:20;
 snrR = snrD; %only analyzing symmetric networks
 
 
-r = 50; % bits/s
+r = 25; % bits/s
 W = 100; % Hz , guessing
 R = k*(2*r)/W;
-outageBitThreshold = numbits*0.3; %dB. SNR at receiver below which we consider receipt an "outage"
+outageBitThreshold = numbits*0.15; %dB. SNR at receiver below which we consider receipt an "outage"
 
 
 symbolPeriod = 1E-2;
@@ -104,15 +104,7 @@ end
 close(h);
 
 
-figure;
-semilogy(snrDnorm.amplify,outageResults.amplify/numtrials,'rs-');hold on;
-semilogy(snrDnorm.direct(4:end),outageResults.direct(4:end)/numtrials,'b*-');
-semilogy(snrDnorm.decode,outageResults.decode/numtrials,'kx-');
-semilogy(snrDnorm.selection,outageResults.selection/numtrials,'go-');
-semilogy(snrDnorm.incremental,outageResults.incremental/numtrials,'md-');
-
-hold off;
-legend('amplify and forward','direct transmission','decode and forward','selection decode and forward','incremental amplify and forward');
+figure;semilogy(snrDnorm.amplify,outageResults.amplify/numtrials,'rs-');hold on;semilogy(snrDnorm.direct(4:end),outageResults.direct(4:end)/numtrials,'b*-');semilogy(snrDnorm.decode,outageResults.decode/numtrials,'kx-');semilogy(snrDnorm.selection,outageResults.selection/numtrials,'go-');semilogy(snrDnorm.incremental,outageResults.incremental/numtrials,'md-');axis([0 15 5E-4 1]);hold off;xlabel('Rate Normalized SNR (dB)');ylabel('Outage Probability');title('Outage Probabilities vs SNR');legend('amplify and forward','direct transmission','decode and forward','selection decode and forward','incremental amplify and forward');
 
 figure;hold on;
 plot(snrD,bigR.amplify,'rs-');
@@ -120,5 +112,8 @@ plot(snrD,bigR.direct,'b*-');
 plot(snrD,bigR.decode,'kx-');
 plot(snrD,bigR.selection,'go-');
 plot(snrD,bigR.incremental,'md-');
+
+hold off;
+legend('amplify and forward','direct transmission','decode and forward','selection decode and forward','incremental amplify and forward');
 
 
