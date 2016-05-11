@@ -95,7 +95,7 @@ close(h);
 
 figure;
 semilogy(snrDnorm.amplify,outageResults.amplify/numtrials,'rs-');hold on;
-semilogy(snrDnorm.direct(4:end),outageResults.direct(4:end)/numtrials,'b*-');
+semilogy(snrDnorm.direct,outageResults.direct/numtrials,'b*-');
 semilogy(snrDnorm.decode,outageResults.decode/numtrials,'kx-');
 semilogy(snrDnorm.selection,outageResults.selection/numtrials,'go-');
 semilogy(snrDnorm.incremental,outageResults.incremental/numtrials,'md-');
