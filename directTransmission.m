@@ -1,20 +1,7 @@
-function [ isoutage ] = directTransmission( snrD,P,M,numbits,channelSD,outageBitThreshold )
+function [ isoutage ] = directTransmission( bits,x,xSDn,snrD,P,M,channelSD,outageBitThreshold )
 %DIRECTTRANSMISSION - see amplifyAndForward() for docs
-
-k = log2(M);
-bits = randi([0,1],1,numbits);
-msg = bi2de(reshape(bits,k,size(bits,2)/k).','left-msb')';
-x = qammod(msg,M);
-x = x*P / std(x); %scale transmission power to P
-
-n0Dlinear = std(x)/10^(snrD/10);
-
-xSD = filter(channelSD,x);
-xSDn = awgn(xSD,snrD,'measured');
-nSD = xSDn - x;
-
-measuredSnrD = 10*log10(var(x)/var(nSD));
 %equalize
+k = log2(M);
 xSDnEq = xSDn ./ channelSD.PathGains.';
 
 
@@ -22,7 +9,7 @@ xSDnEq = xSDn ./ channelSD.PathGains.';
 
 % scatterplot(xSDn);
 yn = qamdemod(xSDnEq,M,0,'gray');
-yn = de2bi(yn,'left-msb')';
+yn = reshape(de2bi(yn,'left-msb')',1,length(bits));
 [numerr,ratioerr] = biterr(bits,yn);
 isoutage = numerr >= outageBitThreshold;
 end

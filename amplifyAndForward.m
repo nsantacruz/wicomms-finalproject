@@ -1,4 +1,4 @@
-function [ isoutage ] = amplifyAndForward( snrD,snrR,P,M,numbits,channelSD,channelSR,channelRD,outageBitThreshold )
+function [ isoutage ] = amplifyAndForward( bits,x,xSDn,xSRn,snrD,snrR,P,M,channelSD,channelSR,channelRD,outageBitThreshold )
 %AMPLIFYANDFORWARD - implements the amplify and forward cooperative
 %algorithm
 %snrD, snrR - snr at destination and relay, respectively
@@ -13,24 +13,11 @@ function [ isoutage ] = amplifyAndForward( snrD,snrR,P,M,numbits,channelSD,chann
 %RETURNS - isoutage, a boolean indicating whether the final received signal
 %at destination is below outageThreshold
 k = log2(M);
-bits = randi([0,1],1,numbits);
-msg = bi2de(reshape(bits,k,size(bits,2)/k).','left-msb')';
-x = qammod(msg,M);
-x = x*sqrt(P) / std(x); %scale transmission power to P
-
-
 n0Dlinear = var(x)/10^(snrD/10);
 
 n0Rlinear = var(x)/10^(snrR/10);
 
 n0Rdb = 10*log10(n0Rlinear);
-
-
-xSD = filter(channelSD,x);
-xSDn = awgn(xSD,snrD,'measured');
-
-xSR = filter(channelSR,x);
-xSRn = awgn(xSR,snrR,'measured');
 
 %AMPLIFY APPROPRIATELY
 hmag = channelSR.PathGains' .* channelSR.PathGains.';
@@ -58,7 +45,7 @@ xMRC = xMRC / std(xMRC);
 %  scatterplot(xSDnEq);
 %  scatterplot(xRDnEq);
 yn = qamdemod(xMRC,M,0,'gray');
-yn = de2bi(yn,'left-msb')';
+yn = reshape(de2bi(yn,'left-msb')',1,length(bits));
 
 [numerr,ratioerr] = biterr(bits,yn);
 

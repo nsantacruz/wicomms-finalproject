@@ -2,17 +2,17 @@ clc, clear, close all;
 
 numbits = 1024;
 numtrials = 1E3;
-M = 2;
+M = 4;
 k = log2(M);
 P = 10; % max power allowable by transmitters
-snrD = -3:1:10;
+snrD = -3:2:20;
 snrR = snrD; %only analyzing symmetric networks
 
 
-r = 50; % bits/s
+r = 25; % bits/s
 W = 100; % Hz , guessing
 R = k*(2*r)/W;
-outageBitThreshold = numbits*0.005; %dB. SNR at receiver below which we consider receipt an "outage"
+outageBitThreshold = numbits*0.15; %dB. SNR at receiver below which we consider receipt an "outage"
 
 
 symbolPeriod = 1E-2;
@@ -56,12 +56,23 @@ tic;
 h = waitbar(0,'wait!');
 for ii = 1:length(snrD)
     for jj = 1:numtrials
-   
-        dirResult  = directTransmission(snrD(ii),P,M,numbits,channelSD,outageBitThreshold);
-        ampResult = amplifyAndForward(snrD(ii),snrR(ii),P,M,numbits,channelSD,channelSR,channelRD,outageBitThreshold);
-        decResult = decodeAndForward(snrD(ii),snrR(ii),P,M,numbits,channelSD,channelSR,channelRD,outageBitThreshold);
-        [secResult,secRate] = selectionDecodeAndForward(snrD(ii),snrR(ii),P,M,numbits,channelSD,channelSR,channelRD,outageBitThreshold,R);
-        [incResult,incRate] = incrementalAmplifyAndForward(snrD(ii),snrR(ii),P,M,numbits,channelSD,channelSR,channelRD,outageBitThreshold,R);
+        
+        bits = randi([0,1],1,numbits);
+        msg = bi2de(reshape(bits,k,size(bits,2)/k).','left-msb')';
+        x = qammod(msg,M);
+        x = x*sqrt(P) / std(x); %scale transmission power to P
+        xSD = filter(channelSD,x);
+        xSR = filter(channelSR,x);
+        xSDn = awgn(xSD,snrD(ii),'measured');
+        xSRn = awgn(xSR,snrR(ii),'measured');
+        %sdPathGains = channelSD.PathGains;
+        %srPathGains = channelSR.PathGains;
+        
+        dirResult  = directTransmission(bits,x,xSDn,snrD(ii),P,M,channelSD,outageBitThreshold);
+        ampResult = amplifyAndForward(bits,x,xSDn,xSRn,snrD(ii),snrR(ii),P,M,channelSD,channelSR,channelRD,outageBitThreshold);
+        decResult = decodeAndForward(bits,x,xSDn,xSRn,snrD(ii),snrR(ii),P,M,channelSD,channelSR,channelRD,outageBitThreshold);
+        [secResult,secRate] = selectionDecodeAndForward(bits,x,xSDn,xSRn,snrD(ii),snrR(ii),P,M,channelSD,channelSR,channelRD,outageBitThreshold,R);
+        [incResult,incRate] = incrementalAmplifyAndForward(bits,x,xSDn,xSRn,snrD(ii),snrR(ii),P,M,channelSD,channelSR,channelRD,outageBitThreshold,R);
         
         outageResults.direct(ii) = outageResults.direct(ii) + dirResult;
         outageResults.amplify(ii) = outageResults.amplify(ii) + ampResult;
@@ -103,6 +114,14 @@ semilogy(snrDnorm.incremental,outageResults.incremental/numtrials,'md-');
 hold off;
 legend('amplify and forward','direct transmission','decode and forward','selection decode and forward','incremental amplify and forward');
 
+figure;hold on;
+plot(snrD,bigR.amplify,'rs-');
+plot(snrD,bigR.direct,'b*-');
+plot(snrD,bigR.decode,'kx-');
+plot(snrD,bigR.selection,'go-');
+plot(snrD,bigR.incremental,'md-');
 
+hold off;
+legend('amplify and forward','direct transmission','decode and forward','selection decode and forward','incremental amplify and forward');
 
 

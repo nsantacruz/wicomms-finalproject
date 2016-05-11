@@ -1,4 +1,4 @@
-function [ isoutage,rate ] = selectionDecodeAndForward( snrD,snrR,P,M,numbits,channelSD,channelSR,channelRD,outageBitThreshold,R )
+function [ isoutage,rate ] = selectionDecodeAndForward( bits,x,xSDn,xSRn,snrD,snrR,P,M,channelSD,channelSR,channelRD,outageBitThreshold,R )
 %AMPLIFYANDFORWARD - implements the amplify and forward cooperative
 %algorithm
 %snrD, snrR - snr at destination and relay, respectively
@@ -13,31 +13,18 @@ function [ isoutage,rate ] = selectionDecodeAndForward( snrD,snrR,P,M,numbits,ch
 %RETURNS - isoutage, a boolean indicating whether the final received signal
 %at destination is below outageThreshold
 k = log2(M);
-bits = randi([0,1],1,numbits);
-msg = bi2de(reshape(bits,k,size(bits,2)/k).','left-msb')';
-x = qammod(msg,M);
-x = x*sqrt(P) / std(x); %scale transmission power to P
-
-SELECTION_THRESHOLD = 0.5;
+SELECTION_THRESHOLD = 0.05;
 
 n0Dlinear = var(x)/10^(snrD/10);
 
 n0Rlinear = var(x)/10^(snrR/10);
 
-n0Rdb = 10*log10(n0Rlinear);
 
-
-xSD = filter(channelSD,x);
-xSDn = awgn(xSD,snrD,'measured');
-
-xSR = filter(channelSR,x);
-xSRn = awgn(xSR,snrR,'measured');
-
-if mean(abs(channelSR.PathGains)) > SELECTION_THRESHOLD    
+if ~any(abs(channelSR.PathGains) < SELECTION_THRESHOLD)    
     %DECODE AND FORWARD
     xSRnEq = xSRn ./ channelSR.PathGains.';
     xSRdecoded = qamdemod(xSRnEq,M,0,'gray');
-    xSRdecoded = de2bi(xSRdecoded,'left-msb')';
+    xSRdecoded = reshape(de2bi(xSRdecoded,'left-msb')',1,length(bits));
     xSRdecoded = bi2de(reshape(xSRdecoded,k,size(xSRdecoded,2)/k).','left-msb')';
     xforward = qammod(xSRdecoded,M);
     xforward = xforward*sqrt(P)/ std(xforward); %scale transmission power to P
@@ -54,13 +41,13 @@ if mean(abs(channelSR.PathGains)) > SELECTION_THRESHOLD
     [xMRC] = maximalRatioCombine(xSDnEq,xRDnEq,channelSD.PathGains,channelRD.PathGains,n0Dlinear,n0Rlinear);
     xMRC = xMRC / std(xMRC);
     yn = qamdemod(xMRC,M,0,'gray');
-    yn = de2bi(yn,'left-msb')';
+    yn = reshape(de2bi(yn,'left-msb')',1,length(bits));
     
     rate = R/2;
 else
     xSDnEq = xSDn ./ channelSD.PathGains.';
     yn = qamdemod(xSDnEq,M,0,'gray');
-    yn = de2bi(yn,'left-msb')';
+    yn = reshape(de2bi(yn,'left-msb')',1,length(bits));
     
     rate = R;
 end
@@ -79,6 +66,5 @@ end
 [numerr,ratioerr] = biterr(bits,yn);
 
 isoutage = numerr >= outageBitThreshold;
-s
 end
 
