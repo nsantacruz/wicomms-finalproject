@@ -49,7 +49,7 @@ xRDnEq = xRDn ./ channelRD.PathGains.';
 xSDnEq = sqrt(P)*xSDnEq/std(xSDnEq);
 xRDnEq = sqrt(P)*xRDnEq/std(xRDnEq);
 
-xMRC = maximalRatioCombine(xSDnEq,xRDnEq,channelSD.PathGains,channelRD.PathGains,n0Dlinear,n0Dlinear + n0Rlinear);
+xMRC = maximalRatioCombine(xSDnEq,xRDnEq,channelSD.PathGains,channelRD.PathGains,n0Dlinear,n0Rlinear);
 
 %nMRC = xMRC - x;
 %measuredSnrD = 10*log10(var(x)/var(nMRC));
