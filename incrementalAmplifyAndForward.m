@@ -47,7 +47,7 @@ xSDnEq = sqrt(P)*xSDnEq/std(xSDnEq);
 xRDnEq = sqrt(P)*xRDnEq/std(xRDnEq);
 
 
-[xMRC] = maximalRatioCombine(xSDnEq,xRDnEq,channelSD.PathGains,channelRD.PathGains,n0Dlinear,n0Dlinear + n0Rlinear);
+[xMRC] = maximalRatioCombine(xSDnEq,xRDnEq,channelSD.PathGains,channelRD.PathGains,n0Dlinear,n0Rlinear);
 xMRC = xMRC / std(xMRC);
 %nMRC = xMRC - x;
 %measuredSnrD = 10*log10(var(x)/var(nMRC));  
@@ -60,7 +60,7 @@ xMRC = xMRC / std(xMRC);
 ynAandF = qamdemod(xMRC,M,0,'gray');
 ynAandF = de2bi(ynAandF,'left-msb')';
 
-ynDirect = qamdemod(xSDn,M,0,'gray');
+ynDirect = qamdemod(xSDnEq,M,0,'gray');
 ynDirect = de2bi(ynDirect,'left-msb')';
 
 [numerrAandF,~] = biterr(bits,ynAandF);

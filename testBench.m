@@ -1,6 +1,6 @@
 clc, clear, close all;
 
-numbits = 100;
+numbits = 1024;
 numtrials = 1E3;
 M = 2;
 
@@ -9,14 +9,14 @@ snrD = 0:1:10;
 snrR = snrD; %only analyzing symmetric networks
 
 
-r = 50; % bits/s
+r = 5000; % bits/s
 W = 100; % Hz , guessing
 R = (2*r)/W;
-outageBitThreshold = numbits*0.1; %dB. SNR at receiver below which we consider receipt an "outage"
+outageBitThreshold = numbits*0.005; %dB. SNR at receiver below which we consider receipt an "outage"
 
 
-symbolPeriod = 1E-4;
-coherenceTime = 10; %should be much greater than symbol period for slow fading
+symbolPeriod = 1E-2;
+coherenceTime = 1; %should be much greater than symbol period for slow fading
 dopplerShift = 1/coherenceTime; 
 
 

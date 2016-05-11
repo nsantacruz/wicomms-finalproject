@@ -18,7 +18,7 @@ msg = bi2de(reshape(bits,k,size(bits,2)/k).','left-msb')';
 x = qammod(msg,M);
 x = x*sqrt(P) / std(x); %scale transmission power to P
 
-SELECTION_THRESHOLD = 0.7;
+SELECTION_THRESHOLD = 0.5;
 
 n0Dlinear = var(x)/10^(snrD/10);
 
@@ -52,7 +52,7 @@ if mean(abs(channelSR.PathGains)) > SELECTION_THRESHOLD
     xRDnEq = sqrt(P)*xRDnEq/std(xRDnEq);
 
 
-    [xMRC] = maximalRatioCombine(xSDnEq,xRDnEq,channelSD.PathGains,channelRD.PathGains,n0Dlinear,n0Dlinear + n0Rlinear);
+    [xMRC] = maximalRatioCombine(xSDnEq,xRDnEq,channelSD.PathGains,channelRD.PathGains,n0Dlinear,n0Rlinear);
     xMRC = xMRC / std(xMRC);
     yn = qamdemod(xMRC,M,0,'gray');
     yn = de2bi(yn,'left-msb')';
